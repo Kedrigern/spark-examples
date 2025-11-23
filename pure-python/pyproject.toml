@@ -1,0 +1,10 @@
+[project]
+name = "pure-python-pyspark"
+version = "0.1.0"
+description = "Pyspark compute in python."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "delta-spark>=4.0.0",
+    "pyspark>=4.0.1",
+]

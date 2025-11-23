@@ -1,0 +1,6 @@
+*.pyc
+.env
+.venv
+uv.lock
+__pycache__/
+__marimo__/
