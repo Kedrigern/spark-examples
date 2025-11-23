@@ -62,10 +62,10 @@ def _(spark):
     data = [
         [1, "Alice"], [2, "Bob"], [3, "Cathy"]
     ]
-    df = spark.createDataFrame(data, ["id", "name"])
+    df1 = spark.createDataFrame(data, ["id", "name"])
     print("Hello world!")
-    print(type(df))
-    df.toArrow()
+    print(type(df1))
+    df1.toArrow()
     return
 
 
@@ -73,6 +73,28 @@ def _(spark):
 def _(mo):
     mo.md(r"""
     ## Load from CSV
+    """)
+    return
+
+
+@app.cell
+def _(spark):
+    path = "data/user.csv"
+    df2 = (
+        spark.read.format("csv")
+        .option("header", True)
+        .option("inferSchema", True)
+        .load(path)
+    )
+
+    df2.toArrow()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Load directory
     """)
     return
 

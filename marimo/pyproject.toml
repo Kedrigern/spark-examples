@@ -9,4 +9,5 @@ dependencies = [
     "marimo>=0.18.0",
     "pyarrow>=22.0.0",
     "pyspark>=4.0.1",
+    "ruff>=0.14.6",
 ]
