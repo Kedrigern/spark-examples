@@ -1,4 +1,4 @@
-id,name
-1, Alice
-2, Bob
-3, Cathy
+id,name,email,birthday,registered_at,is_active,balance,transparency_level
+1,Alice,alice@wonderland.org,1989-01-15,2020-10-24T08:15:01+01:00,true,"100.50",0.5
+2,Bob,bob@crypto.com,1995-02-20,2020-10-24T10:17:01+01:00,false,225.00,0.55
+3,Cathy,cathy@example.com,1988-03-10,2020-10-24T12:19:01+01:00,true,300.75,0.6

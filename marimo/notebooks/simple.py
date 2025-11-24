@@ -51,6 +51,16 @@ def _():
     return (spark,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Now we have `spark` inicialized. So we can create first dataframe.
+
+    Standard output is writen after cell and dataframe in last cell is displayed as table. Sometimes pyspark dataframe is not showed directly. Solution is to convert it to arrow format: `df.toArrow()`
+    """)
+    return
+
+
 @app.cell
 def _(spark):
     data = [

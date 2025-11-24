@@ -1,0 +1,4 @@
+id,name,email,birthday,registered_at,is_active,balance,transparency_level
+4,James,james@lanister.uk,2003-04-25,2020-11-24T11:25:33+01:00,true,1560.30,0.4
+5,Lily,luly@example.com,2001-05-30,2020-12-24T08:15:01+01:00,false,250.00,0.7
+6,Michael,miky@example.com,2002-06-15,2020-12-24T08:16:55+01:00,true,350.25,0.65

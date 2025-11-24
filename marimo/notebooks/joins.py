@@ -49,15 +49,72 @@ def _():
     return (spark,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## 1:n relation
+    """)
+    return
+
+
 @app.cell
 def _(spark):
-    data = [
-        [1, "Alice"], [2, "Bob"], [3, "Cathy"]
+    from pyspark.sql.functions import col
+
+    path_u = "data/user.parquet"
+    df_u = spark.read.format("parquet").load(path_u)
+
+    items_data = [
+        # id, user_id, item
+        [1, 1, "Porcelain cup"],
+        [2, 2, "USB stick"], 
+        [3, 2, "Phone"],
+        [4, 4, "Sword"],
+        [5, 4, "Wine"]
     ]
-    df = spark.createDataFrame(data, ["id", "name"])
-    print("Hello world!")
-    print(type(df))
-    df.toArrow()
+
+    df_items = spark.createDataFrame(items_data, ["id", "user_id", "item"])
+
+    df_u_i = df_u.alias("u").join(
+        df_items.alias("i"), on=col("u.id") == col("i.user_id"), how="left"
+    ).select(["u.id", "u.name", "u.email", "i.item"])
+
+    df_u_i.toArrow()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Group by
+
+    [groupBy doc](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.groupBy.html#pyspark.sql.DataFrame.groupBy)
+    """)
+    return
+
+
+@app.cell
+def _():
+    #df_u_i.groupby("id")
+    #df_u_i.groupBy("id")
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## m:n relation
+    """)
+    return
+
+
+@app.cell
+def _():
+    address_data = [
+        [1, "5528 Joker St, Rapid City, SD 57703", "USA"],
+        [2, "Windsor SL4 1NJ", "United Kingdom"],
+        [3, "Spálená 16, 110 00 Nové Město", "Czech republic"],
+    ]
     return
 
 

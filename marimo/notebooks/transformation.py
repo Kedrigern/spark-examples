@@ -45,19 +45,112 @@ def _():
         spark.sparkContext.setLogLevel("ERROR")
         return spark
 
-    spark = prepare_spark()
+    spark: SparkSession = prepare_spark()
     return (spark,)
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## DataFrame without proper datatypes
+    """)
+    return
+
+
 @app.cell
-def _(spark):
-    data = [
-        [1, "Alice"], [2, "Bob"], [3, "Cathy"]
-    ]
-    df = spark.createDataFrame(data, ["id", "name"])
-    print("Hello world!")
-    print(type(df))
+def _(spark: "SparkSession"):
+    from pyspark.sql.types import (
+        StructType,
+        StructField,
+        StringType,
+    IntegerType
+    )
+
+    string_user_schema = StructType(
+        [
+            StructField("id_s", StringType(), True),
+            StructField("name_s", StringType(), True),
+            StructField("email_s", StringType(), True),
+            StructField("birthday_s", StringType(), True),
+            StructField("registered_at_s", StringType(), True),
+            StructField("is_active_s", StringType(), True),
+            StructField("balance_s", StringType(), True),
+            StructField("transparency_level_s", StringType(), True),
+        ]
+    )
+    path = "data/*.csv" # all csv files in directory
+    df = (
+        spark.read.format("csv")
+        .option("header", True)
+        .schema(string_user_schema)
+        .load(path)
+    )
     df.toArrow()
+    return (df,)
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Type casting
+
+    Cast columns (all are in string) to its proper data types. We use mass operation. You can perform it by chaining too:
+
+    `df2 = df.withColumn("id", df.id_s.cast("int")).withCo...  `
+
+    `df2 = df.withColumnRenamed("name_s", "name")`
+    """)
+    return
+
+
+@app.cell
+def _(df):
+    from pyspark.sql.functions import split, upper
+    from pyspark.sql.types import DecimalType, DoubleType
+
+    df2 = df.withColumns(
+        {
+            "id": df.id_s.cast("int"),
+            "name_u": upper(df.name_s),
+            "domain": split(df.email_s, "@")[1],
+            "birthday": df.birthday_s.cast("date"),
+            "registered_at": df.registered_at_s.cast("timestamp"),
+            "is_active": df.is_active_s.cast("boolean"),
+            "balance": df.balance_s.cast(DecimalType(10, 2)),
+            "transparency_level": df.transparency_level_s.cast(DoubleType()),
+        }
+    ).withColumnsRenamed({"name_s": "name", "email_s": "mail"}).select(
+        [
+            "id",
+            "name",
+            "mail",
+            "birthday",
+            "registered_at",
+            "is_active",
+            "balance",
+            "transparency_level",
+        ]
+    )
+
+    df2.toArrow()
+    return df2, split, upper
+
+
+@app.cell
+def _(df2, split, upper):
+    from pyspark.sql.functions import col
+
+    interests_rate = 1.04
+
+    df3 = df2.withColumns(
+        {
+            "name_u": upper(col("name")),
+            "domain": split(col("mail"), "@")[1],
+            "balance_after_interests": col("balance") * interests_rate
+        }
+    )
+
+    df3.toArrow()
     return
 
 
