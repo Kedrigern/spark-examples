@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.18.0"
+__generated_with = "0.18.1"
 app = marimo.App(width="medium")
 
 
@@ -61,7 +61,7 @@ def _(mo):
 
 @app.cell
 def _(spark):
-    from pyspark.sql.functions import col, count, collect_list, collect_set
+    from pyspark.sql.functions import col, count, collect_list, collect_set, sum as ssum
 
     path_u = "data/user.parquet"
     df_u = spark.read.format("parquet").load(path_u)
@@ -83,9 +83,9 @@ def _(spark):
         on=col("u.id") == col("i.user_id"), 
         how="left"
     ).select(["u.id", "u.name", 'u.email', col("i.item"), col("i.id").alias("id_item")]).sort("id")
-    
+
     df_u_i.toArrow()
-    return col, collect_list, collect_set, count, df_u_i
+    return col, collect_list, collect_set, count, df_u_i, ssum
 
 
 @app.cell(hide_code=True)
@@ -115,16 +115,6 @@ def _(col, collect_list, collect_set, count, df_u_i):
     return
 
 
-@app.cell
-def _():
-    address_data = [
-        [1, "5528 Joker St, Rapid City, SD 57703", "USA"],
-        [2, "Windsor SL4 1NJ", "United Kingdom"],
-        [3, "Spálená 16, 110 00 Nové Město", "Czech republic"],
-    ]
-    return
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
@@ -140,22 +130,67 @@ def _(spark):
     from datetime import date
     from decimal import Decimal
 
-    books = spark.read.parquet("data/book.parquet")
+    books = spark.read.parquet("data/book.parquet") 
     books.toArrow()
-    return
+    return (books,)
 
 
 @app.cell
 def _(spark):
     authors = spark.read.parquet("data/author.parquet")
     authors.toArrow()
-    return
+    return (authors,)
 
 
 @app.cell
 def _(spark):
-    book_author_rel = spark.read.parquet("data/book-author-rel.parquet")
+    book_author_rel = spark.read.csv("data/book-author-rel.csv", header=True)
     book_author_rel.toArrow()
+    return (book_author_rel,)
+
+
+@app.cell
+def _(authors, book_author_rel, books, col):
+    base_df = books.alias("b").join(
+        book_author_rel.alias("r"),
+        on=books.id == book_author_rel.book_id,
+        how="right").join(
+        authors.alias("a"),
+        on=col("r.author_id") == col("a.id"),
+        how="left").select(
+            col("b.id"),
+            col("b.title"),
+            col("b.series"),
+            col("b.published"),
+            col("b.pages"),
+            col("a.name"),
+            col("r.author_id"),
+        )
+    base_df.toArrow()
+    return (base_df,)
+
+
+@app.cell
+def _(base_df, col, collect_list):
+    base_df.groupby(
+            col("b.id"),
+            col("b.title"),
+            col("b.series"),
+            col("b.published"),
+            col("b.pages"),
+        ).agg(
+            collect_list("a.name").alias("author")
+        ).toArrow()
+    return
+
+
+@app.cell
+def _(base_df, col, collect_list, count, ssum):
+    base_df.filter("b.series IS NOT NULL").groupBy(col("b.series")).agg(
+        collect_list(col("b.title")),
+        count("b.pages").alias("book_number"),
+        ssum("b.pages").alias("total_pages")
+    ).toArrow()
     return
 
 
