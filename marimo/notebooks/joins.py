@@ -53,13 +53,15 @@ def _():
 def _(mo):
     mo.md(r"""
     ## 1:n relation
+
+    First we can create classic left join. So there are multiple lines from left table if there are more than one match from right table.
     """)
     return
 
 
 @app.cell
 def _(spark):
-    from pyspark.sql.functions import col
+    from pyspark.sql.functions import col, count, collect_list, collect_set
 
     path_u = "data/user.parquet"
     df_u = spark.read.format("parquet").load(path_u)
@@ -75,12 +77,15 @@ def _(spark):
 
     df_items = spark.createDataFrame(items_data, ["id", "user_id", "item"])
 
+    # Join
     df_u_i = df_u.alias("u").join(
-        df_items.alias("i"), on=col("u.id") == col("i.user_id"), how="left"
-    ).select(["u.id", "u.name", "u.email", "i.item"])
-
+        df_items.alias("i"), 
+        on=col("u.id") == col("i.user_id"), 
+        how="left"
+    ).select(["u.id", "u.name", 'u.email', col("i.item"), col("i.id").alias("id_item")]).sort("id")
+    
     df_u_i.toArrow()
-    return
+    return col, collect_list, collect_set, count, df_u_i
 
 
 @app.cell(hide_code=True)
@@ -88,23 +93,25 @@ def _(mo):
     mo.md(r"""
     ## Group by
 
+    GroupBy returns special object which anticipate methods `agg`, `count` etc.
+
     [groupBy doc](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.groupBy.html#pyspark.sql.DataFrame.groupBy)
     """)
     return
 
 
 @app.cell
-def _():
-    #df_u_i.groupby("id")
-    #df_u_i.groupBy("id")
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## m:n relation
-    """)
+def _(col, collect_list, collect_set, count, df_u_i):
+    # There must be all columns that you want to preserve in result
+    df_u_i.groupBy(
+        "id",
+        "name",
+        "email",
+    ).agg(
+        count("item").alias("item_count"),
+        collect_list("item").alias("items"),
+        collect_set("id_item").alias("items_id"),
+    ).sort(col("item_count").desc(), col("id").asc()).toArrow()
     return
 
 
@@ -115,6 +122,40 @@ def _():
         [2, "Windsor SL4 1NJ", "United Kingdom"],
         [3, "Spálená 16, 110 00 Nové Město", "Czech republic"],
     ]
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## m:n relation
+
+    For m:n relation we need litle more complex data. We use Books, Authors and relation between them. Data are prepared in parquet files.
+    """)
+    return
+
+
+@app.cell
+def _(spark):
+    from datetime import date
+    from decimal import Decimal
+
+    books = spark.read.parquet("data/book.parquet")
+    books.toArrow()
+    return
+
+
+@app.cell
+def _(spark):
+    authors = spark.read.parquet("data/author.parquet")
+    authors.toArrow()
+    return
+
+
+@app.cell
+def _(spark):
+    book_author_rel = spark.read.parquet("data/book-author-rel.parquet")
+    book_author_rel.toArrow()
     return
 
 

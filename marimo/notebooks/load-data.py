@@ -100,6 +100,28 @@ def load_from_app(spark):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
+    We can define schema string with datatypes. DDL (Data Definition Language) string. But method `createDataFrame` is very strict and we need to pass exact python type like date object:
+    """)
+    return
+
+
+@app.cell
+def _(spark):
+    from datetime import date
+
+    data2 = [
+        [1, "Alice", date(1989, 1, 15)],
+        [2, "Bob", date(1995, 2, 20)],
+        [3, "Cathy", date(1988, 3, 10)]
+    ]
+    df1b = spark.createDataFrame(data2, "id INT, name STRING, birthday DATE")
+    df1b.toArrow()
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
     ## Load from CSV
 
     Load one csv file with 3 users.
@@ -155,6 +177,8 @@ def load_from_csv_2(path2, spark):
             StructField("transparency_level", DoubleType(), True),
         ]
     )
+    # Alternative
+    # ddl_schema = "id INT, name STRING, email STRING, birthday DATE, registered_at TIMESTAMP, is_active BOOLEAN, balance DECIMAL(10,2), transparency_level DOUBLE"
 
     df2b = (
         spark.read.format("csv")
@@ -187,7 +211,6 @@ def load_from_csv_3(spark, user_schema):
         .load(path3)
     )
     df3.toArrow()
-
 
     return
 
