@@ -8,6 +8,9 @@ with app.setup(hide_code=True):
     from delta import configure_spark_with_delta_pip
     from pyspark.sql import SparkSession
     from pyspark.sql.classic.dataframe import DataFrame
+    from pyspark.sql.functions import col
+    import pyspark.sql.functions as sf
+
 
     def prepare_spark() -> SparkSession:
         """
@@ -55,8 +58,6 @@ def _():
 
 @app.cell
 def n_1rel():
-    from pyspark.sql.functions import col, count, collect_list, collect_set, sum as ssum
-
     path_u = "data/user/user.parquet"
     df_u = spark.read.format("parquet").load(path_u)
 
@@ -79,7 +80,7 @@ def n_1rel():
     ).select(["u.id", "u.name", 'u.email', col("i.item"), col("i.id").alias("id_item")]).sort("id")
 
     df_u_i.toArrow()
-    return col, collect_list, collect_set, count, df_u_i, ssum
+    return (df_u_i,)
 
 
 @app.cell(hide_code=True)
@@ -93,16 +94,16 @@ def _():
 
 
 @app.cell
-def _(col, collect_list, collect_set, count, df_u_i):
+def _(df_u_i):
     # There must be all columns that you want to preserve in result
     df_u_i.groupBy(
         "id",
         "name",
         "email",
     ).agg(
-        count("item").alias("item_count"),
-        collect_list("item").alias("items"),
-        collect_set("id_item").alias("items_id"),
+        sf.count("item").alias("item_count"),
+        sf.collect_list("item").alias("items"),
+        sf.collect_set("id_item").alias("items_id"),
     ).sort(col("item_count").desc(), col("id").asc()).toArrow()
     return
 
@@ -141,7 +142,7 @@ def read_rel():
 
 
 @app.cell
-def join_b_a(authors, book_author_rel, books, col):
+def join_b_a(authors, book_author_rel, books):
     base_df = books.alias("b").join(
         book_author_rel.alias("r"),
         on=books.id == book_author_rel.book_id,
@@ -162,7 +163,7 @@ def join_b_a(authors, book_author_rel, books, col):
 
 
 @app.cell
-def group_by_b_a(base_df, col, collect_list):
+def group_by_b_a(base_df):
     base_df.groupby(
             col("b.id"),
             col("b.title"),
@@ -170,18 +171,37 @@ def group_by_b_a(base_df, col, collect_list):
             col("b.published"),
             col("b.pages"),
         ).agg(
-            collect_list("a.name").alias("author")
+            sf.collect_list("a.name").alias("author")
         ).toArrow()
     return
 
 
 @app.cell
-def agg_func(base_df, col, collect_list, count, ssum):
+def agg_func(base_df):
     base_df.filter("b.series IS NOT NULL").groupBy(col("b.series")).agg(
-        collect_list(col("b.title")),
-        count("b.pages").alias("book_number"),
-        ssum("b.pages").alias("total_pages")
+        sf.collect_list(col("b.title")),
+        sf.count("b.pages").alias("book_number"),
+        sf.sum("b.pages").alias("total_pages")
     ).toArrow()
+    return
+
+
+@app.cell
+def _(books):
+    from decimal import Decimal
+    from datetime import datetime, date
+
+    df_s = spark.createDataFrame(data=[
+        [1, 1, 100, Decimal("399.50"), date(2025, 1, 1), date(2025, 6, 30)],
+        [2, 2, 50, Decimal("499.00"), date(2025, 1, 1), date(2025, 6, 30)],
+        [3, 1, 150, Decimal("370.00"), date(2025, 1, 1), date(2025, 6, 30)],
+    ], schema="id INT, book_id INT, amount INT, price_avg DECIMAL(10,2), range_start DATE, range_end DATE")
+
+
+    books.toArrow()
+    df_s.toArrow()
+
+    # 
     return
 
 

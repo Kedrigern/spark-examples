@@ -4,7 +4,6 @@ __generated_with = "0.18.1"
 app = marimo.App(width="medium")
 
 with app.setup(hide_code=True):
-    # Initialization code that runs before all other cells
     import marimo as mo
 
     from delta import configure_spark_with_delta_pip
@@ -99,14 +98,14 @@ def _():
 
 @app.cell
 def _(df):
-    from pyspark.sql.functions import split, upper
+    import pyspark.sql.functions as sf
     from pyspark.sql.types import DecimalType, DoubleType
 
     df2 = df.withColumns(
         {
             "id": df.id_s.cast("int"),
-            "name_u": upper(df.name_s),
-            "domain": split(df.email_s, "@")[1],
+            "name_u": sf.upper(df.name_s),
+            "domain": sf.split(df.email_s, "@")[1],
             "birthday": df.birthday_s.cast("date"),
             "registered_at": df.registered_at_s.cast("timestamp"),
             "is_active": df.is_active_s.cast("boolean"),
@@ -127,19 +126,19 @@ def _(df):
     )
 
     df2.toArrow()
-    return df2, split, upper
+    return df2, sf
 
 
 @app.cell
-def _(df2, split, upper):
+def _(df2, sf):
     from pyspark.sql.functions import col
 
     interests_rate = 1.04
 
     df3 = df2.withColumns(
         {
-            "name_u": upper(col("name")),
-            "domain": split(col("mail"), "@")[1],
+            "name_u": sf.upper(col("name")),
+            "domain": sf.split(col("mail"), "@")[1],
             "balance_after_interests": col("balance") * interests_rate
         }
     )

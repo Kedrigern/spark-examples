@@ -4,12 +4,13 @@ __generated_with = "0.18.1"
 app = marimo.App(width="medium")
 
 with app.setup(hide_code=True):
-    # Initialization code that runs before all other cells
     import marimo as mo
 
     from delta import configure_spark_with_delta_pip
     from pyspark.sql import SparkSession
     from pyspark.sql.classic.dataframe import DataFrame
+    from pyspark.sql.functions import col
+    import pyspark.sql.functions as sf
 
     def prepare_spark() -> SparkSession:
         """
