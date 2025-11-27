@@ -1,17 +1,15 @@
 import marimo
 
-__generated_with = "0.18.0"
+__generated_with = "0.18.1"
 app = marimo.App(width="medium")
 
-
-@app.cell
-def _():
+with app.setup(hide_code=True):
+    # Initialization code that runs before all other cells
     import marimo as mo
-    return (mo,)
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     # Simple PySpark
 
@@ -52,9 +50,9 @@ def _():
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
-    Now we have `spark` inicialized. So we can create first dataframe.
+    Now we have `spark` inicialized. So we can create first dataframe. In following notebookes initialization of spark will be moved to setup cell.
 
     Standard output is writen after cell and dataframe in last cell is displayed as table. Sometimes pyspark dataframe is not showed directly. Solution is to convert it to arrow format: `df.toArrow()`
     """)

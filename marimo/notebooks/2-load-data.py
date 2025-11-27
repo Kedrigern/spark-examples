@@ -1,27 +1,12 @@
 import marimo
 
-__generated_with = "0.18.0"
+__generated_with = "0.18.1"
 app = marimo.App(width="medium")
 
-
-@app.cell
-def _():
+with app.setup(hide_code=True):
+    # Initialization code that runs before all other cells
     import marimo as mo
-    return (mo,)
 
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    # Load data with PySpark
-
-    Spark inicialization is very verbose. Don't be suprise by warnings.
-    """)
-    return
-
-
-@app.cell
-def _():
     from delta import configure_spark_with_delta_pip
     from pyspark.sql import SparkSession
     from pyspark.sql.classic.dataframe import DataFrame
@@ -48,11 +33,20 @@ def _():
         return spark
 
     spark = prepare_spark()
-    return (spark,)
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
+    mo.md(r"""
+    # Load data with PySpark
+
+    Spark inicialization in setup cell is very verbose. Don't be suprise by warnings.
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
     mo.md(r"""
     ## Source Files
 
@@ -65,17 +59,19 @@ def _(mo):
 def source_files_py():
     import os
 
-    base_path = "data/"
+    base_path = "data/user/"
 
     print("Size Filename")
     for file in os.listdir(base_path):
         result = os.stat(base_path + file)
         print(f"{result.st_size}\t {file} ")
+
+    spark.catalog
     return
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## Load from app
 
@@ -85,7 +81,7 @@ def _(mo):
 
 
 @app.cell
-def load_from_app(spark):
+def load_from_app():
     data = [
         [1, "Alice", "1989-01-15"],
         [2, "Bob", "1995-02-20"],
@@ -98,7 +94,7 @@ def load_from_app(spark):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     We can define schema string with datatypes. DDL (Data Definition Language) string. But method `createDataFrame` is very strict and we need to pass exact python type like date object:
     """)
@@ -106,7 +102,7 @@ def _(mo):
 
 
 @app.cell
-def _(spark):
+def _():
     from datetime import date
 
     data2 = [
@@ -120,7 +116,7 @@ def _(spark):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## Load from CSV
 
@@ -130,8 +126,8 @@ def _(mo):
 
 
 @app.cell
-def load_from_csv_1(spark):
-    path2 = "data/user.csv"
+def load_from_csv_1():
+    path2 = "data/user/user.csv"
     df2 = (
         spark.read.format("csv")
         .option("header", True)
@@ -144,7 +140,7 @@ def load_from_csv_1(spark):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     In csv there is no info about datatypes, so decimal type is wrongly cast as Float64 that can lead to precision lost. We have to define schema to obtain correct datatypes in columns.
     """)
@@ -152,7 +148,7 @@ def _(mo):
 
 
 @app.cell
-def load_from_csv_2(path2, spark):
+def load_from_csv_2(path2):
     from pyspark.sql.types import (
         StructType,
         StructField,
@@ -173,8 +169,8 @@ def load_from_csv_2(path2, spark):
             StructField("birthday", DateType(), True),
             StructField("registered_at", TimestampType(), True),
             StructField("is_active", BooleanType(), True),
-            StructField("balance", DecimalType(10, 2), True),
-            StructField("transparency_level", DoubleType(), True),
+            StructField("balance", DecimalType(10, 2), True, metadata={"comment": "Curency EUR"}),
+            StructField("transparency_level", DoubleType(), True, metadata={"comment": "GUI transparency"}),
         ]
     )
     # Alternative
@@ -192,7 +188,7 @@ def load_from_csv_2(path2, spark):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## Load directory
 
@@ -202,8 +198,8 @@ def _(mo):
 
 
 @app.cell
-def load_from_csv_3(spark, user_schema):
-    path3 = "data/*.csv" # all csv files in directory
+def load_from_csv_3(user_schema):
+    path3 = "data/user/*.csv" # all csv files in directory
     df3 = (
         spark.read.format("csv")
         .option("header", True)
@@ -211,12 +207,11 @@ def load_from_csv_3(spark, user_schema):
         .load(path3)
     )
     df3.toArrow()
-
     return
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## Load json
 
@@ -226,8 +221,8 @@ def _(mo):
 
 
 @app.cell
-def load_from_json(spark):
-    path4 = "data/user.json"
+def load_from_json():
+    path4 = "data/user/user.json"
     df4 = (
         spark.read.format("json")
         .load(path4)
@@ -237,7 +232,7 @@ def load_from_json(spark):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## Load parquet
 
@@ -247,8 +242,8 @@ def _(mo):
 
 
 @app.cell
-def load_from_parquet(spark):
-    path5 = "data/user.parquet"
+def load_from_parquet():
+    path5 = "data/user/user.parquet"
     df5 = (
         spark.read.format("parquet")
         .load(path5)

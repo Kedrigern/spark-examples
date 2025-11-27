@@ -4,3 +4,5 @@
 uv.lock
 __pycache__/
 __marimo__/
+.idea
+marimo/spark-warehouse

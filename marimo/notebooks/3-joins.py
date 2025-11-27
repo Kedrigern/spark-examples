@@ -3,23 +3,8 @@ import marimo
 __generated_with = "0.18.1"
 app = marimo.App(width="medium")
 
-
-@app.cell
-def _():
+with app.setup(hide_code=True):
     import marimo as mo
-    return (mo,)
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    # Table joins in PySpark
-    """)
-    return
-
-
-@app.cell
-def _():
     from delta import configure_spark_with_delta_pip
     from pyspark.sql import SparkSession
     from pyspark.sql.classic.dataframe import DataFrame
@@ -46,12 +31,21 @@ def _():
         return spark
 
     spark = prepare_spark()
-    return (spark,)
+
+    book_graph = mo.ui.code_editor(
+        value="""flowchart TD
+        R[fa:fa-table Book author rel] --> B[fa:fa-book Book] 
+        R  --> A[fa:fa-user Author]""",
+        language="md",
+        label="Mermaid editor",
+    )
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
+    # Table joins in PySpark
+
     ## 1:n relation
 
     First we can create classic left join. So there are multiple lines from left table if there are more than one match from right table.
@@ -60,10 +54,10 @@ def _(mo):
 
 
 @app.cell
-def _(spark):
+def n_1rel():
     from pyspark.sql.functions import col, count, collect_list, collect_set, sum as ssum
 
-    path_u = "data/user.parquet"
+    path_u = "data/user/user.parquet"
     df_u = spark.read.format("parquet").load(path_u)
 
     items_data = [
@@ -89,13 +83,11 @@ def _(spark):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## Group by
 
-    GroupBy returns special object which anticipate methods `agg`, `count` etc.
-
-    [groupBy doc](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.groupBy.html#pyspark.sql.DataFrame.groupBy)
+    [GroupBy](https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/api/pyspark.sql.DataFrame.groupBy.html#pyspark.sql.DataFrame.groupBy) returns special object which anticipate methods `agg`, `count` etc.
     """)
     return
 
@@ -116,41 +108,40 @@ def _(col, collect_list, collect_set, count, df_u_i):
 
 
 @app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
+def _():
+    mo.md(rf"""
     ## m:n relation
 
-    For m:n relation we need litle more complex data. We use Books, Authors and relation between them. Data are prepared in parquet files.
+    For `m:n` relation we need litle more complex data. We use Books, Authors and relation between them. Data are prepared in parquet files.
+
+    {mo.mermaid(book_graph.value).text}
     """)
     return
 
 
 @app.cell
-def _(spark):
-    from datetime import date
-    from decimal import Decimal
-
-    books = spark.read.parquet("data/book.parquet") 
+def read_book():
+    books = spark.read.parquet("data/book/book.parquet") 
     books.toArrow()
     return (books,)
 
 
 @app.cell
-def _(spark):
-    authors = spark.read.parquet("data/author.parquet")
+def read_authors():
+    authors = spark.read.parquet("data/book/author.parquet")
     authors.toArrow()
     return (authors,)
 
 
 @app.cell
-def _(spark):
-    book_author_rel = spark.read.csv("data/book-author-rel.csv", header=True)
+def read_rel():
+    book_author_rel = spark.read.parquet("data/book/book-author-rel.parquet")
     book_author_rel.toArrow()
     return (book_author_rel,)
 
 
 @app.cell
-def _(authors, book_author_rel, books, col):
+def join_b_a(authors, book_author_rel, books, col):
     base_df = books.alias("b").join(
         book_author_rel.alias("r"),
         on=books.id == book_author_rel.book_id,
@@ -171,7 +162,7 @@ def _(authors, book_author_rel, books, col):
 
 
 @app.cell
-def _(base_df, col, collect_list):
+def group_by_b_a(base_df, col, collect_list):
     base_df.groupby(
             col("b.id"),
             col("b.title"),
@@ -185,7 +176,7 @@ def _(base_df, col, collect_list):
 
 
 @app.cell
-def _(base_df, col, collect_list, count, ssum):
+def agg_func(base_df, col, collect_list, count, ssum):
     base_df.filter("b.series IS NOT NULL").groupBy(col("b.series")).agg(
         collect_list(col("b.title")),
         count("b.pages").alias("book_number"),

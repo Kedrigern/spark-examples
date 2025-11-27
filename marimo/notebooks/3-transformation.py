@@ -1,25 +1,12 @@
 import marimo
 
-__generated_with = "0.18.0"
+__generated_with = "0.18.1"
 app = marimo.App(width="medium")
 
-
-@app.cell
-def _():
+with app.setup(hide_code=True):
+    # Initialization code that runs before all other cells
     import marimo as mo
-    return (mo,)
 
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    # Data transformation in PySpark
-    """)
-    return
-
-
-@app.cell
-def _():
     from delta import configure_spark_with_delta_pip
     from pyspark.sql import SparkSession
     from pyspark.sql.classic.dataframe import DataFrame
@@ -46,11 +33,18 @@ def _():
         return spark
 
     spark: SparkSession = prepare_spark()
-    return (spark,)
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
+    mo.md(r"""
+    # Data transformation in PySpark
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _():
     mo.md(r"""
     ## DataFrame without proper datatypes
     """)
@@ -58,12 +52,12 @@ def _(mo):
 
 
 @app.cell
-def _(spark: "SparkSession"):
+def _():
     from pyspark.sql.types import (
         StructType,
         StructField,
         StringType,
-    IntegerType
+        IntegerType
     )
 
     string_user_schema = StructType(
@@ -78,7 +72,7 @@ def _(spark: "SparkSession"):
             StructField("transparency_level_s", StringType(), True),
         ]
     )
-    path = "data/*.csv" # all csv files in directory
+    path = "data/user/*.csv" # all csv files in directory
     df = (
         spark.read.format("csv")
         .option("header", True)
@@ -90,7 +84,7 @@ def _(spark: "SparkSession"):
 
 
 @app.cell(hide_code=True)
-def _(mo):
+def _():
     mo.md(r"""
     ## Type casting
 
