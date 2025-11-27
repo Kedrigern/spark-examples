@@ -4,7 +4,7 @@ __generated_with = "0.18.1"
 app = marimo.App(width="medium")
 
 with app.setup(hide_code=True):
-    # Initialization code that runs before all other cells
+    import os
     import marimo as mo
 
     from delta import configure_spark_with_delta_pip
@@ -41,13 +41,7 @@ def _():
     # Load data with PySpark
 
     Spark inicialization in setup cell is very verbose. Don't be suprise by warnings.
-    """)
-    return
 
-
-@app.cell(hide_code=True)
-def _():
-    mo.md(r"""
     ## Source Files
 
     We have same data in 3 format: `csv`, `json`, `parquet`. CSV is split into 2 files.
@@ -57,16 +51,13 @@ def _():
 
 @app.cell
 def source_files_py():
-    import os
-
     base_path = "data/user/"
 
+    print(f"Following files we have in {base_path}:")
     print("Size Filename")
     for file in os.listdir(base_path):
         result = os.stat(base_path + file)
         print(f"{result.st_size}\t {file} ")
-
-    spark.catalog
     return
 
 
@@ -88,7 +79,12 @@ def load_from_app():
         [3, "Cathy", "1988-03-10"]
     ]
     df1 = spark.createDataFrame(data, ["id", "name", "birthday"])
-    print(type(df1))
+    row1 = df1.filter("id = 1").first()
+
+    print(f"DataFrame type: {type(df1)}")
+    print(f"Row type: {type(row1)}")
+    print(f"Name in row with id 1: {row1['name']}")
+
     df1.toArrow()
     return
 

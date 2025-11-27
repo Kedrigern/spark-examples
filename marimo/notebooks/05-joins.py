@@ -186,24 +186,5 @@ def agg_func(base_df):
     return
 
 
-@app.cell
-def _(books):
-    from decimal import Decimal
-    from datetime import datetime, date
-
-    df_s = spark.createDataFrame(data=[
-        [1, 1, 100, Decimal("399.50"), date(2025, 1, 1), date(2025, 6, 30)],
-        [2, 2, 50, Decimal("499.00"), date(2025, 1, 1), date(2025, 6, 30)],
-        [3, 1, 150, Decimal("370.00"), date(2025, 1, 1), date(2025, 6, 30)],
-    ], schema="id INT, book_id INT, amount INT, price_avg DECIMAL(10,2), range_start DATE, range_end DATE")
-
-
-    books.toArrow()
-    df_s.toArrow()
-
-    # 
-    return
-
-
 if __name__ == "__main__":
     app.run()
